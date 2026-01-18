@@ -1,10 +1,10 @@
 import hashlib
 import os
-import numpy as np
+import json
 
 #====================================================================================
 #test data
-folder_with_files ='./test'
+folder_with_files ='./verify'
 
 #====================================================================================
 def calculate_sha256(filename):
@@ -47,10 +47,27 @@ def _get_folder_files_and_there_hashes():
 
 
 #====================================================================================
-#todo so presets can be stored in json files and read as lists like OPS
-hashes_preset_01 = ["b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9",
-                 "XX4d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcdXX"]
+def load_preset(preset_to_load_number: str):
 
-_compare_hashes_with_preset(_get_folder_files_and_there_hashes(), hashes_preset_01)
+    #If user data folder does not exist, create it.
+    if not os.path.isdir("presets"):
+        os.mkdir("presets")
+    path =os.path.abspath("presets/"+f"hashes_preset_{preset_to_load_number}.json")
+
+    if not os.path.isfile(path):
+        return None
+
+    try:
+        with open(path, 'r') as f:
+            data = json.load(f)
+            if isinstance(data, list) and data:
+                return data
+            else:
+                return None
+    except json.JSONDecodeError:
+        print(f"[Error] Failed to decode JSON in: {path}")
+        return None
+
+_compare_hashes_with_preset(_get_folder_files_and_there_hashes(), load_preset("01"))
 
 
