@@ -3,11 +3,13 @@ import os
 import json
 
 #====================================================================================
-#test data
-folder_with_files ='./verify'
+verification_folder ='./verify'
+preset_folder='./presets'
+preset_prefix='hashes_preset_'
 
 #====================================================================================
-def calculate_sha256(filename):
+#Caluclates the hash of a file
+def _calculate_sha256(filename):
     hash_object = hashlib.sha256()
 
     with open(filename, "rb") as f:
@@ -18,6 +20,7 @@ def calculate_sha256(filename):
     return hash_object.hexdigest()
 
 #====================================================================================
+#Compares each file's corresponding hash from the verify folder with the list of hashes from the chosen preset.
 def _compare_hashes_with_preset(folder_files_and_hashes: dict, hashes_preset: list):
     files_that_failed_verification = []
 
@@ -34,25 +37,42 @@ def _compare_hashes_with_preset(folder_files_and_hashes: dict, hashes_preset: li
     print(f"files that failed verification: {files_that_failed_verification}")
 
 #====================================================================================
-def _get_folder_files_and_there_hashes():
+#Returns a dict of, each file's name and it's corresponding hash from the 'verify' folder.
+def _get_hashes():
     folder_files_and_hashes = {}
 
-    for f in os.listdir(folder_with_files):
-        full_path = os.path.join(folder_with_files, f)
+    for f in os.listdir(verification_folder):
+        full_path = os.path.join(verification_folder, f)
         if os.path.isfile(full_path):
             folder_files_and_hashes[f"{f}"] = []
-            folder_files_and_hashes[f"{f}"].append(calculate_sha256(full_path))
+            folder_files_and_hashes[f"{f}"].append(_calculate_sha256(full_path))
 
     return folder_files_and_hashes
 
+#====================================================================================
+#Creates a preset using all files from the 'verify' folder
+def _create_preset(preset_name: str):
+    hashes = []
+
+    for f in os.listdir(verification_folder):
+        full_path = os.path.join(verification_folder, f)
+        if os.path.isfile(full_path):
+            hashes.append(_calculate_sha256(full_path))
+
+        #todo make sure preset with same name doesnt already exist
+
+        with open(f"{preset_folder}/{preset_prefix}{preset_name}", 'w') as f:
+            json.dump(hashes, f, indent=4)
+
 
 #====================================================================================
-def load_preset(preset_to_load_number: str):
+#Returns a list of hashes for the desired preset.
+def _load_preset(preset_name: str):
 
     #If user data folder does not exist, create it.
     if not os.path.isdir("presets"):
         os.mkdir("presets")
-    path =os.path.abspath("presets/"+f"hashes_preset_{preset_to_load_number}.json")
+    path =os.path.abspath("presets/"+f"{preset_prefix}{preset_name}.json")
 
     if not os.path.isfile(path):
         return None
@@ -68,6 +88,12 @@ def load_preset(preset_to_load_number: str):
         print(f"[Error] Failed to decode JSON in: {path}")
         return None
 
-_compare_hashes_with_preset(_get_folder_files_and_there_hashes(), load_preset("01"))
+def _delete_preset(preset_name: str):
+    #todo
+    pass
+
+#====================================================================================
+_compare_hashes_with_preset(_get_hashes(), _load_preset("Example"))
+#_create_preset("test")
 
 
