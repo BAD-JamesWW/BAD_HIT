@@ -14,7 +14,8 @@ verification_folder = './verify'
 PRESET_FOLDER = './presets'
 METADATA_FOLDER = './metadata'
 PRESET_PREFIX = 'hashes_preset_'
-METADATA_PREFIX = 'metadata_for_hashes_preset_'
+METADATA_FOR_HASHES_PREFIX = 'metadata_for_hashes_preset_'
+METADATA_FOR_HASH_COMPARISON_WITH_PRESET_PREFIX= 'metadata_for_hash_comparison_with_preset_'
 HIT_VERSION = '1.0.0'
 
 
@@ -57,12 +58,15 @@ def _calculate_sha256(filename):
 
 #====================================================================================
 #Compares each file's corresponding hash from the verify folder with the list of hashes from the chosen preset.
-def _compare_hashes_with_preset(folder_files_and_hashes: dict, hashes_preset: list):
+def _compare_hashes_with_preset(folder_files_and_hashes: dict, hashes_preset: list, preset_name: str):
+    files_that_failed_verification = []
+
     if hashes_preset is None:
+        _create_hash_comparison_with_preset_metadata(preset_name, inspect.currentframe().f_code.co_name, 0, 0, files_that_failed_verification)
         print('\nNo preset found')
         return
 
-    files_that_failed_verification = []
+    start_time = time.perf_counter()
 
     #look through each files hash and if a hash is not in the preset, then add it to list of hashes not found
     for key, value in folder_files_and_hashes.items():
@@ -74,10 +78,12 @@ def _compare_hashes_with_preset(folder_files_and_hashes: dict, hashes_preset: li
             files_that_failed_verification.append(key)
         print("complete")
 
+    duration_seconds = time.perf_counter() - start_time
+    _create_hash_comparison_with_preset_metadata(preset_name, inspect.currentframe().f_code.co_name, 1, duration_seconds, files_that_failed_verification)
+
     #test outcome
     if not files_that_failed_verification:
         print("\nAll files passed verification")
-        return
     else:
         print(f"\nfiles that failed verification: {files_that_failed_verification}")
 
@@ -142,22 +148,87 @@ def _create_hashes_preset_metadata(preset_name: str, action: str, result: int, d
     if not os.path.isdir(METADATA_FOLDER):
         os.mkdir(METADATA_FOLDER)
 
-    # save (once) after collecting hashes
-    with open(f"{METADATA_FOLDER}/{METADATA_PREFIX}{preset_name}.json", 'w') as f:
-        json.dump({
-            "message": f"The following hashes were added to {PRESET_FOLDER}/{PRESET_PREFIX}{preset_name}.json",
-            "hashes": hashes_written,
-            "timestamp of event": datetime.now().astimezone().isoformat(),
-            "preset_modified_at": datetime.fromtimestamp(mtime).astimezone().isoformat(),
-            "app": "HIT",
-            "version": HIT_VERSION,
-            "action": action,
-            "target_folder": PRESET_FOLDER,
-            "preset": f"{PRESET_PREFIX}{preset_name}",
-            "result": result,
-            "hashes_written": len(hashes_written),
-            "duration_ms": f"{duration_seconds:.4f}"
-        }, f, indent=2)
+    # Append metadata to corresponding .json
+    metadata_path = f"{METADATA_FOLDER}/{METADATA_FOR_HASHES_PREFIX}{preset_name}.json"
+
+    event = {
+        "message": f"The following hashes were added to {PRESET_FOLDER}/{PRESET_PREFIX}{preset_name}.json",
+        "hashes": hashes_written,
+        "timestamp_of_event": datetime.now().astimezone().isoformat(),
+        "preset_modified_at": datetime.fromtimestamp(mtime).astimezone().isoformat(),
+        "app": "HIT",
+        "version": HIT_VERSION,
+        "action": action,
+        "target_folder": PRESET_FOLDER,
+        "preset": f"{PRESET_PREFIX}{preset_name}",
+        "result": result,
+        "hashes_written": len(hashes_written),
+        "duration_ms": f"{duration_seconds:.4f}"
+    }
+
+    # read existing list (or create new one)
+    if os.path.isfile(metadata_path):
+        with open(metadata_path, "r") as f:
+            try:
+                data = json.load(f)
+                if not isinstance(data, list):
+                    data = [data]  # convert old single object to list
+            except json.JSONDecodeError:
+                data = []
+    else:
+        data = []
+
+    # append event
+    data.append(event)
+
+    # write back
+    with open(metadata_path, "w") as f:
+        json.dump(data, f, indent=2)
+        
+
+#====================================================================================
+#Writes metadata for the hash comparison with preset results
+def _create_hash_comparison_with_preset_metadata(preset_name: str, action: str, result: int, duration_seconds: float, hashes_that_failed_verification: list):
+    filename = f"{PRESET_FOLDER}/{PRESET_PREFIX}{preset_name}.json"
+    mtime = os.path.getmtime(filename)
+
+    if not os.path.isdir(METADATA_FOLDER):
+        os.mkdir(METADATA_FOLDER)
+
+    # Append metadata to corresponding .json
+    metadata_path = f"{METADATA_FOLDER}/{METADATA_FOR_HASH_COMPARISON_WITH_PRESET_PREFIX}{preset_name}.json"
+
+    event = {
+        "timestamp_of_event": datetime.now().astimezone().isoformat(),
+        "preset_modified_at": datetime.fromtimestamp(mtime).astimezone().isoformat(),
+        "app": "HIT",
+        "version": HIT_VERSION,
+        "action": action,
+        "target_verification_folder": verification_folder,
+        "preset": f"{PRESET_PREFIX}{preset_name}",
+        "result": result,
+        "hashes_that_failed_verification": len(hashes_that_failed_verification),
+        "comparison_duration_ms": f"{duration_seconds:.4f}"
+    }
+
+    # read existing list (or create new one)
+    if os.path.isfile(metadata_path):
+        with open(metadata_path, "r") as f:
+            try:
+                data = json.load(f)
+                if not isinstance(data, list):
+                    data = [data]  # convert old single object to list
+            except json.JSONDecodeError:
+                data = []
+    else:
+        data = []
+
+    # append event
+    data.append(event)
+
+    # write back
+    with open(metadata_path, "w") as f:
+        json.dump(data, f, indent=2)
 
 
 #====================================================================================
@@ -205,7 +276,7 @@ if __name__ == "__main__":
 
     _create_preset("Example")
 
-    _compare_hashes_with_preset(_get_hashes(), _load_preset("Example"))
+    _compare_hashes_with_preset(_get_hashes(), _load_preset("Example"), "Example")
 
     # _delete_preset("Example")
 
