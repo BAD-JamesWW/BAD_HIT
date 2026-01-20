@@ -132,7 +132,9 @@ def _create_preset(preset_name: str):
     duration_seconds = time.perf_counter() - start_time
     _create_hashes_preset_metadata(preset_name, inspect.currentframe().f_code.co_name, 1, duration_seconds, hashes)
 
-#Creates a preset using all files from the 'verify' folder
+
+#====================================================================================
+#Writes metadata for the creation of presets
 def _create_hashes_preset_metadata(preset_name: str, action: str, result: int, duration_seconds: float, hashes_written: list):
     filename = f"{PRESET_FOLDER}/{PRESET_PREFIX}{preset_name}.json"
     mtime = os.path.getmtime(filename)
