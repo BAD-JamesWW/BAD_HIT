@@ -4,12 +4,18 @@ import json
 import sys
 import tkinter as tk
 from tkinter import filedialog
+from datetime import datetime, timezone
+import time
+import inspect
 
 
 #====================================================================================
 verification_folder = './verify'
 PRESET_FOLDER = './presets'
+METADATA_FOLDER = './metadata'
 PRESET_PREFIX = 'hashes_preset_'
+METADATA_PREFIX = 'metadata_for_hashes_preset_'
+HIT_VERSION = '1.0.0'
 
 
 #====================================================================================
@@ -101,10 +107,16 @@ def _get_hashes():
 def _create_preset(preset_name: str):
     hashes = []
 
-    #todo if preset file already exists do error already exists
+    #Return if preset already exists
+    if os.path.isfile(PRESET_FOLDER + '/' + PRESET_PREFIX + preset_name + '.json'):
+        print(f"\n[Error] Preset {preset_name} already exists")
+        _create_hashes_preset_metadata(preset_name, inspect.currentframe().f_code.co_name, 0, 0, hashes)
+        return
 
     if not os.path.isdir(PRESET_FOLDER):
         os.mkdir(PRESET_FOLDER)
+
+    start_time = time.perf_counter()
 
     for f in os.listdir(verification_folder):
         full_path = os.path.join(verification_folder, f)
@@ -116,6 +128,34 @@ def _create_preset(preset_name: str):
     # save (once) after collecting hashes
     with open(f"{PRESET_FOLDER}/{PRESET_PREFIX}{preset_name}.json", 'w') as f:
         json.dump(hashes, f, indent=4)
+
+    duration_seconds = time.perf_counter() - start_time
+    _create_hashes_preset_metadata(preset_name, inspect.currentframe().f_code.co_name, 1, duration_seconds, hashes)
+
+#Creates a preset using all files from the 'verify' folder
+def _create_hashes_preset_metadata(preset_name: str, action: str, result: int, duration_seconds: float, hashes_written: list):
+    filename = f"{PRESET_FOLDER}/{PRESET_PREFIX}{preset_name}.json"
+    mtime = os.path.getmtime(filename)
+
+    if not os.path.isdir(METADATA_FOLDER):
+        os.mkdir(METADATA_FOLDER)
+
+    # save (once) after collecting hashes
+    with open(f"{METADATA_FOLDER}/{METADATA_PREFIX}{preset_name}.json", 'w') as f:
+        json.dump({
+            "message": f"The following hashes were added to {PRESET_FOLDER}/{PRESET_PREFIX}{preset_name}.json",
+            "hashes": hashes_written,
+            "timestamp of event": datetime.now().astimezone().isoformat(),
+            "preset_modified_at": datetime.fromtimestamp(mtime).astimezone().isoformat(),
+            "app": "HIT",
+            "version": HIT_VERSION,
+            "action": action,
+            "target_folder": PRESET_FOLDER,
+            "preset": f"{PRESET_PREFIX}{preset_name}",
+            "result": result,
+            "hashes_written": len(hashes_written),
+            "duration_ms": f"{duration_seconds:.4f}"
+        }, f, indent=2)
 
 
 #====================================================================================
@@ -166,3 +206,7 @@ if __name__ == "__main__":
     _compare_hashes_with_preset(_get_hashes(), _load_preset("Example"))
 
     # _delete_preset("Example")
+
+    #TODO upon preset creation, add the presets rich meta-data to a separate file in a
+    #todo metada folder for I in CIA. so creation time,date,location,size,
+    #todo file names that were hashed, original folder location
