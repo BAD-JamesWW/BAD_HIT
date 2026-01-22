@@ -3,9 +3,6 @@ import json
 import os
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
-import sys
-import tkinter as tk
-from tkinter import filedialog
 from datetime import datetime, timezone
 import time
 import inspect
@@ -29,6 +26,8 @@ class CompareResult:
 class Model:
     """Core HIT logic (no UI)."""
 
+
+    # ====================================================================================
     def __init__(self, verification_folder: str = "./verify", preset_folder: str = "./presets", log_fn=print):
         self.verification_folder = os.path.abspath(verification_folder)
         self.preset_folder = os.path.abspath(preset_folder)
@@ -36,6 +35,7 @@ class Model:
         self.log = log_fn
 
         os.makedirs(self.preset_folder, exist_ok=True)
+
 
     # ====================================================================================
     # Caluclates the hash of a file
@@ -49,14 +49,17 @@ class Model:
 
         return hash_object.hexdigest()
 
+    # ====================================================================================
+    # Used to set the verification folder
     def set_verification_folder(self, folder: str) -> None:
         folder = os.path.abspath(folder)
         if not os.path.isdir(folder):
             raise FileNotFoundError(f"Verification folder does not exist: {folder}")
         self.verification_folder = folder
 
+
     # ====================================================================================
-    # Creates a preset using all files from the 'verify' folder
+    # Used to create a preset using all files from the verification folder
     def _create_preset(self, preset_name: str):
         hashes = []
 
@@ -84,7 +87,7 @@ class Model:
                 if os.path.isfile(full_path):
                     rel_path = os.path.relpath(full_path,
                                                self.verification_folder)  # keeps folder structure in the name
-                    self.log(f"\nappending hash of {rel_path} to preset {PRESET_PREFIX}{preset_name}")
+                    self.log(f"\nGenerating hash of {rel_path} to preset {PRESET_PREFIX}{preset_name}...")
                     hashes.append(self._calculate_sha256(full_path))
                     self.log("complete")
 
@@ -103,8 +106,9 @@ class Model:
 
         self.log(f"\n[OK] Preset {PRESET_PREFIX}{preset_name} created.")
 
+
     # ====================================================================================
-    # Writes metadata for the creation of presets
+    # Used to write metadata for the creation of presets
     def _create_hashes_preset_metadata(
         self,
         preset_name: str,

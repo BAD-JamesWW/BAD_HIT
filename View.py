@@ -1,14 +1,13 @@
 from __future__ import annotations
-
 from dataclasses import dataclass
 from typing import Callable, Optional
-
 import dearpygui.dearpygui as dpg
 import os
 import tkinter as tk
 from tkinter import filedialog
 
 
+#====================================================================================
 @dataclass
 class ViewHandles:
     preset_name_input: int
@@ -22,10 +21,13 @@ class ViewHandles:
 class View:
     """DearPyGUI view. Pure UI; no business logic."""
 
+
+    # ====================================================================================
     def __init__(self) -> None:
         self.handles: Optional[ViewHandles] = None
 
-    # --- Windows native folder picker (tkinter) ---
+
+    # ====================================================================================
     def _select_verification_folder_windows(self) -> str | None:
         root = tk.Tk()
         root.withdraw()
@@ -43,6 +45,8 @@ class View:
 
         return os.path.abspath(selected)
 
+
+    # ====================================================================================
     def build(
         self,
         on_action_clicked: Callable[[], None],
@@ -100,9 +104,8 @@ class View:
         dpg.show_viewport()
         dpg.set_primary_window("primary", True)
 
-    # ----------------------------
-    # UI helpers
-    # ----------------------------
+
+    #==================================(UI HELPERS)=======================================
     def start(self) -> None:
         dpg.start_dearpygui()
         dpg.destroy_context()
@@ -154,3 +157,4 @@ class View:
     def clear_log(self) -> None:
         assert self.handles is not None
         dpg.set_value(self.handles.log_box, "")
+    # ==================================(END UI HELPERS)==================================

@@ -13,10 +13,8 @@ class Controller:
         self.view = view
         model.log = view.log
 
-    # ----------------------------
-    # Callbacks
-    # ----------------------------
 
+    # ===================================(CALLBACKS)======================================
     def on_action_clicked(self) -> None:
         try:
             preset_name = self.view.get_preset_name_input().strip()
@@ -48,8 +46,11 @@ class Controller:
 
         except Exception as e:
             self.view.log(f"[Error] {e}")
+# ===================================(END CALLBACKS)==================================
 
 
+
+#====================================================================================
 def main() -> None:
     model = Model(verification_folder="./verify", preset_folder="./presets")
     view = View()
@@ -62,7 +63,6 @@ def main() -> None:
 
     # initial state
     view.set_verification_folder_label(model.verification_folder)
-    view.log("Ready.\n1) Click 'Choose verification folder…'\n2) Enter a preset name\n3) Click 'Create preset'")
 
     view.start()
 
