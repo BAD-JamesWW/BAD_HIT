@@ -34,6 +34,30 @@ class Controller:
         except Exception as e:
             self.view.log(f"[Error] {e}")
 
+    def on_verify_clicked(self) -> None:
+        try:
+            preset_name = self.view.get_preset_name_input().strip()
+            if not preset_name:
+                self.view.log("[Error] Preset name is required.")
+                return
+
+            if not os.path.isdir(self.model.verification_folder):
+                self.view.log("[Error] Verification folder is not set. Click 'Choose verification folder…' first.")
+                return
+
+            self.view.enable_create_preset_button(False)
+            self.view.enable_verify_preset_button(False)
+            self.view.log(f"Verifying hashes of {self.model.verification_folder} with preset '{preset_name}'")
+            path = self.model._compare_hashes_with_preset(
+                folder_files_and_hashes=self.model._get_hashes(),
+                hashes_preset=self.model._load_preset("Example"),
+                preset_name=preset_name)
+            self.view.enable_create_preset_button(True)
+            self.view.enable_verify_preset_button(True)
+
+        except Exception as e:
+            self.view.log(f"[Error] {e}")
+
     def on_folder_picked(self, folder_path: str | None) -> None:
         try:
             if not folder_path:
@@ -59,6 +83,7 @@ def main() -> None:
     view.build(
         on_action_clicked=controller.on_action_clicked,
         on_folder_picked=controller.on_folder_picked,
+        on_verify_clicked=controller.on_verify_clicked
     )
 
     # initial state
@@ -67,6 +92,7 @@ def main() -> None:
     view.start()
 
 
+#====================================================================================
 if __name__ == "__main__":
     try:
         main()

@@ -14,6 +14,7 @@ class ViewHandles:
     choose_folder_btn: int
     current_folder_text: int
     action_btn: int
+    verify_btn: int
     log_box: int
     folder_dialog: int
 
@@ -50,6 +51,7 @@ class View:
     def build(
         self,
         on_action_clicked: Callable[[], None],
+        on_verify_clicked: Callable[[], None],
         on_folder_picked: Callable[[str | None], None],
     ) -> None:
         dpg.create_context()
@@ -76,8 +78,11 @@ class View:
 
             current_folder_text = dpg.add_text("Verification folder: (not set)")
 
+            # Buttons row: Create preset + Verify (side-by-side)
             with dpg.group(horizontal=True):
                 action_btn = dpg.add_button(label="Create preset", width=180, callback=lambda: on_action_clicked())
+                dpg.add_spacer(width=10)
+                verify_btn = dpg.add_button(label="Verify", width=180, callback=lambda: on_verify_clicked())
 
             dpg.add_separator()
             dpg.add_text("Output:")
@@ -96,8 +101,9 @@ class View:
             choose_folder_btn=choose_folder_btn,
             current_folder_text=current_folder_text,
             action_btn=action_btn,
+            verify_btn=verify_btn,
             log_box=log_box,
-            folder_dialog=0,  # no longer using dpg file dialog
+            folder_dialog=0,
         )
 
         dpg.setup_dearpygui()
@@ -145,6 +151,15 @@ class View:
     def enable_create_preset_button(self, enabled: bool) -> None:
         assert self.handles is not None
         dpg.configure_item(self.handles.action_btn, enabled=enabled)
+
+    def enable_verify_preset_button(self, enabled: bool) -> None:
+        assert self.handles is not None
+        dpg.configure_item(self.handles.verify_btn, enabled=enabled)
+
+    # NEW: enable/disable verify button
+    def enable_verify_button(self, enabled: bool) -> None:
+        assert self.handles is not None
+        dpg.configure_item(self.handles.verify_btn, enabled=enabled)
 
     def log(self, msg: str, *, newline: bool = True) -> None:
         assert self.handles is not None
