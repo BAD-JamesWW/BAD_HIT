@@ -1,11 +1,11 @@
 from __future__ import annotations
 from dataclasses import dataclass
 from typing import Callable, Optional
-
 import dearpygui.dearpygui as dpg
 import os
 import tkinter as tk
 from tkinter import filedialog
+import pygame
 
 
 #====================================================================================
@@ -30,6 +30,7 @@ class View:
 
     # ====================================================================================
     def _select_verification_folder_windows(self) -> str | None:
+        self.play_sound("assets/audio/ui_sound_02.wav", wait=False)
         root = tk.Tk()
         root.withdraw()
         root.attributes("-topmost", True)
@@ -54,7 +55,11 @@ class View:
         on_folder_picked: Callable[[str | None], None],
     ) -> None:
         dpg.create_context()
-        dpg.create_viewport(title="HIT — Hash Integrity Tool (B.A.D.)", width=980, height=640)
+        dpg.create_viewport(title="(H.I.T.) - Hash Integrity Tool", width=980, height=520)
+        dpg.set_viewport_small_icon("assets/images/CompanyLogo.ico")
+        dpg.set_viewport_large_icon("assets/images/CompanyLogo.ico")
+
+        pygame.mixer.init()
 
         # resolve presets directory robustly
         script_dir = os.path.dirname(os.path.abspath(__file__)) if "__file__" in globals() else os.getcwd()
@@ -73,11 +78,7 @@ class View:
             return sorted([n for n in os.listdir(preset_dir) if n.lower().endswith(".json")])
 
         with dpg.window(tag="primary", label="HIT", width=960, height=620):
-            dpg.add_text("HIT — Hash Integrity Tool")
             dpg.add_separator()
-
-            with dpg.group(horizontal=True):
-                dpg.add_text("Mode: Create preset")
 
             with dpg.group(horizontal=True):
                 dpg.add_text("Preset name:")
@@ -90,7 +91,7 @@ class View:
                     items=_list_preset_files() or ["(no presets found)"],
                     width=260,
                     label="",
-                    callback=lambda s, a: _on_preset_chosen(a, preset_name_input)
+                    callback=lambda s, a: _on_preset_chosen(self, a, preset_name_input)  # FIX
                 )
 
                 dpg.add_spacer(width=10)
@@ -100,7 +101,6 @@ class View:
                     width=260,
                     callback=lambda: on_folder_picked(self._select_verification_folder_windows())
                 )
-
 
                 # Refresh preset list when the user hovers the dropdown (covers arrow-click too)
                 with dpg.item_handler_registry(tag="presets_combo_handlers"):
@@ -187,13 +187,28 @@ class View:
         assert self.handles is not None
         dpg.set_value(self.handles.log_box, "")
 
+    def play_sound(self, filename: str, wait: bool = True) -> None:
+        path = os.path.abspath(filename)
+        if not os.path.isfile(path) or os.path.getsize(path) == 0:
+            print(f"[Sound Error] File missing or empty: {path}")
+            return
+        try:
+            pygame.mixer.music.load(path)
+            pygame.mixer.music.play()
+            if wait:
+                while pygame.mixer.music.get_busy():
+                    pygame.time.Clock().tick(30)
+        except Exception as e:
+            print("Audio playback failed:", e)
+
 
 # --- helper for combo selection ---
-def _on_preset_chosen(selected_value: str, preset_name_input_id: int) -> None:
-    if not selected_value or selected_value.startswith("("):
+def _on_preset_chosen(view: View, selected_value: str, preset_name_input_id: int) -> None:
+    view.play_sound("assets/audio/ui_sound_01.wav", wait=False)
+    if not selected_value or str(selected_value).startswith("("):
         return
 
-    name = os.path.splitext(selected_value)[0]
+    name = os.path.splitext(str(selected_value))[0]
     if name.startswith("hashes_preset_"):
         name = name[len("hashes_preset_"):]
     dpg.set_value(preset_name_input_id, name)
