@@ -59,6 +59,56 @@ class View:
         dpg.set_viewport_small_icon("assets/images/CompanyLogo.ico")
         dpg.set_viewport_large_icon("assets/images/CompanyLogo.ico")
 
+
+        # === Red Button Highlight Theme ===
+        with dpg.theme() as red_button_theme:
+            with dpg.theme_component(dpg.mvButton):
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (150, 0, 0, 255))  # Dark red hover
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (200, 0, 0, 255))  # Bright red active
+        # === Red Combo Highlight Theme ===
+        with dpg.theme() as red_combo_theme:
+            with dpg.theme() as red_combo_theme:
+                with dpg.theme_component(dpg.mvAll):
+                    # popup background + border (dropdown)
+                    dpg.add_theme_color(dpg.mvThemeCol_PopupBg, (15, 15, 15, 255))
+                    dpg.add_theme_color(dpg.mvThemeCol_Border, (120, 0, 0, 255))
+
+                    # hovered item background in lists/combos
+                    dpg.add_theme_color(dpg.mvThemeCol_HeaderHovered, (150, 0, 0, 255))
+                    dpg.add_theme_color(dpg.mvThemeCol_HeaderActive, (200, 0, 0, 255))
+                    dpg.add_theme_color(dpg.mvThemeCol_Header, (90, 0, 0, 255))
+
+                    # this is the BLUE you’re seeing (keyboard/gamepad nav highlight)
+                    dpg.add_theme_color(dpg.mvThemeCol_NavHighlight, (150, 0, 0, 255))
+
+                    # sometimes selection uses this too
+                    dpg.add_theme_color(dpg.mvThemeCol_TextSelectedBg, (150, 0, 0, 140))
+
+                # combo frame + arrow
+                with dpg.theme_component(dpg.mvCombo):
+                    dpg.add_theme_color(dpg.mvThemeCol_FrameBgHovered, (40, 0, 0, 255))
+                    dpg.add_theme_color(dpg.mvThemeCol_FrameBgActive, (60, 0, 0, 255))
+                    dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (150, 0, 0, 255))
+                    dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (200, 0, 0, 255))
+
+            with dpg.theme_component(dpg.mvCombo):
+                dpg.add_theme_color(dpg.mvThemeCol_FrameBgHovered, (150, 0, 0, 255))  # hover on the combo box
+                dpg.add_theme_color(dpg.mvThemeCol_FrameBgActive, (200, 0, 0, 255))  # when clicked/open
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, (150, 0, 0, 255))  # arrow hover
+                dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, (200, 0, 0, 255))  # arrow active
+        # === Transparent Theme ===
+        with dpg.theme() as transparent_theme:
+            with dpg.theme_component(0):  # mvAll
+                dpg.add_theme_color(dpg.mvThemeCol_WindowBg, (0, 0, 0, 0))
+        # === Transparent Log Theme ===
+        with dpg.theme() as transparent_log_theme:
+            with dpg.theme_component(dpg.mvChildWindow):
+                dpg.add_theme_color(dpg.mvThemeCol_ChildBg, (0, 0, 0, 0))
+            with dpg.theme_component(dpg.mvInputText):
+                dpg.add_theme_color(dpg.mvThemeCol_FrameBg, (0, 0, 0, 0))
+                dpg.add_theme_color(dpg.mvThemeCol_FrameBgHovered, (0, 0, 0, 0))
+                dpg.add_theme_color(dpg.mvThemeCol_FrameBgActive, (0, 0, 0, 0))
+
         pygame.mixer.init()
 
         # resolve presets directory robustly
@@ -79,6 +129,7 @@ class View:
 
         with dpg.window(tag="primary", label="HIT", width=960, height=620):
             dpg.add_separator()
+            dpg.bind_item_theme("primary", transparent_theme)
 
             with dpg.group(horizontal=True):
                 dpg.add_text("Preset name:")
@@ -93,6 +144,7 @@ class View:
                     label="",
                     callback=lambda s, a: _on_preset_chosen(self, a, preset_name_input)  # FIX
                 )
+                dpg.bind_item_theme(presets_combo, red_combo_theme)
 
                 dpg.add_spacer(width=10)
 
@@ -101,6 +153,7 @@ class View:
                     width=260,
                     callback=lambda: on_folder_picked(self._select_verification_folder_windows())
                 )
+                dpg.bind_item_theme(choose_folder_btn, red_button_theme)
 
                 # Refresh preset list when the user hovers the dropdown (covers arrow-click too)
                 with dpg.item_handler_registry(tag="presets_combo_handlers"):
@@ -117,13 +170,15 @@ class View:
             # Buttons row: Create preset + Verify (side-by-side)
             with dpg.group(horizontal=True):
                 action_btn = dpg.add_button(label="Create preset", width=180, callback=lambda: on_action_clicked())
+                dpg.bind_item_theme(action_btn, red_button_theme)
                 dpg.add_spacer(width=10)
                 verify_btn = dpg.add_button(label="Verify", width=180, callback=lambda: on_verify_clicked())
+                dpg.bind_item_theme(verify_btn, red_button_theme)
 
             dpg.add_separator()
             dpg.add_text("Output:")
 
-            with dpg.child_window(height=360, horizontal_scrollbar=True):
+            with dpg.child_window(tag="log_child",height=360, horizontal_scrollbar=True):
                 log_box = dpg.add_input_text(
                     multiline=True,
                     readonly=True,
@@ -131,6 +186,8 @@ class View:
                     height=-1,
                     no_horizontal_scroll=False,
                 )
+            dpg.bind_item_theme("log_child", transparent_log_theme)
+            dpg.bind_item_theme(log_box, transparent_log_theme)
 
         self.handles = ViewHandles(
             preset_name_input=preset_name_input,
