@@ -55,9 +55,19 @@ class View:
         on_folder_picked: Callable[[str | None], None],
     ) -> None:
         dpg.create_context()
-        dpg.create_viewport(title="(H.I.T.) - Hash Integrity Tool", width=980, height=520)
+        dpg.create_viewport(title="(H.I.T.) - Hash Integrity Tool", width=976, height=535)
+
+        with dpg.texture_registry(show=False):
+            width, height, channels, data = dpg.load_image("assets/images/bg.png")
+            dpg.add_static_texture(width, height, data, tag="background_texture")
+
+        with dpg.window(tag="background_window", no_title_bar=True, no_move=True, no_resize=True, no_scrollbar=True,
+                        no_collapse=True, no_close=True, pos=(-8, -8), width=980, height=520):
+            dpg.add_image("background_texture", tag="background_image")
+
         dpg.set_viewport_small_icon("assets/images/CompanyLogo.ico")
         dpg.set_viewport_large_icon("assets/images/CompanyLogo.ico")
+
 
 
         # === Red Button Highlight Theme ===
@@ -100,6 +110,9 @@ class View:
         with dpg.theme() as transparent_theme:
             with dpg.theme_component(0):  # mvAll
                 dpg.add_theme_color(dpg.mvThemeCol_WindowBg, (0, 0, 0, 0))
+                dpg.add_theme_color(dpg.mvThemeCol_TitleBg, (0, 0, 0))
+                dpg.add_theme_color(dpg.mvThemeCol_TitleBgActive, (0, 0, 0))
+                dpg.add_theme_color(dpg.mvThemeCol_TitleBgCollapsed, (0, 0, 0))
         # === Transparent Log Theme ===
         with dpg.theme() as transparent_log_theme:
             with dpg.theme_component(dpg.mvChildWindow):
@@ -110,6 +123,7 @@ class View:
                 dpg.add_theme_color(dpg.mvThemeCol_FrameBgActive, (0, 0, 0, 0))
 
         pygame.mixer.init()
+        dpg.bind_item_theme("background_window", transparent_theme)
 
         # resolve presets directory robustly
         script_dir = os.path.dirname(os.path.abspath(__file__)) if "__file__" in globals() else os.getcwd()
@@ -127,7 +141,7 @@ class View:
                 return []
             return sorted([n for n in os.listdir(preset_dir) if n.lower().endswith(".json")])
 
-        with dpg.window(tag="primary", label="HIT", width=960, height=620):
+        with dpg.window(tag="primary", label="B.A.D. - H.I.T.", width=957, height=620, pos=[1.9,0], no_close=True):
             dpg.add_separator()
             dpg.bind_item_theme("primary", transparent_theme)
 
@@ -202,7 +216,8 @@ class View:
 
         dpg.setup_dearpygui()
         dpg.show_viewport()
-        dpg.set_primary_window("primary", True)
+        dpg.set_primary_window("background_window", True)
+
 
     # ===============================(UI HELPERS)=========================================
     def start(self) -> None:

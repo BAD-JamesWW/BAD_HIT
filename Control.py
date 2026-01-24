@@ -20,12 +20,12 @@ class Controller:
             preset_name = self.view.get_preset_name_input().strip()
             if not preset_name:
                 self.view.play_sound("assets/audio/ui_sound_05.wav", False)
-                self.view.log("[Error] Preset name is required.")
+                self.view.log("\n[Error] Preset name is required.")
                 return
 
             if not os.path.isdir(self.model.verification_folder):
                 self.view.play_sound("assets/audio/ui_sound_05.wav", False)
-                self.view.log("[Error] Verification folder is not set. Click 'Choose verification folder…' first.")
+                self.view.log("\n[Error] Verification folder is not set. Click 'Choose verification folder…' first.")
                 return
 
             self.view.play_sound("assets/audio/ui_sound_01.wav", False)
