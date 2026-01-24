@@ -60,12 +60,15 @@ class Model:
             self.log(f"\n[Error] Verification folder not found: {verification_folder}")
             return folder_files_and_hashes
 
-        for f in os.listdir(verification_folder):
-            full_path = os.path.join(verification_folder, f)
-            if os.path.isfile(full_path):
-                folder_files_and_hashes[f"{f}"] = []
-                self.log(f"\ncalculating hash for file: {f}")
-                folder_files_and_hashes[f"{f}"].append(self._calculate_sha256(full_path))
+        for root, _, files in os.walk(self.verification_folder):
+            for name in files:
+                full_path = os.path.join(root, name)
+                if os.path.isfile(full_path):
+                    rel_path = os.path.relpath(full_path,
+                                               self.verification_folder)  # keeps folder structure in the name
+                folder_files_and_hashes[f"{name}"] = []
+                self.log(f"\ncalculating hash for file: {name}")
+                folder_files_and_hashes[f"{name}"].append(self._calculate_sha256(full_path))
                 self.log("complete")
 
         return folder_files_and_hashes
