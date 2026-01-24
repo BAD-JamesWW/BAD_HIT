@@ -19,6 +19,7 @@ class ViewHandles:
     verify_btn: int
     log_box: int
     folder_dialog: int
+    clear_log_btn: int
 
 
 class View:
@@ -213,6 +214,7 @@ class View:
             current_folder_text=current_folder_text,
             action_btn=action_btn,
             verify_btn=verify_btn,
+            clear_log_btn=clear_log_btn,
             log_box=log_box,
             folder_dialog=0,
         )
@@ -249,6 +251,10 @@ class View:
     def enable_verify_button(self, enabled: bool) -> None:
         assert self.handles is not None
         dpg.configure_item(self.handles.verify_btn, enabled=enabled)
+
+    def enable_clear_log_button(self, enabled: bool) -> None:
+        assert self.handles is not None
+        dpg.configure_item(self.handles.clear_log_btn, enabled=enabled)
 
     def log(self, msg: str, *, newline: bool = True) -> None:
         assert self.handles is not None

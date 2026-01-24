@@ -30,9 +30,15 @@ class Controller:
 
             self.view.play_sound("assets/audio/ui_sound_01.wav", False)
             self.view.enable_create_preset_button(False)
+            self.view.enable_verify_button(False)
+            self.view.enable_clear_log_button(False)
+            self.view.enable_folder_button(False)
             self.view.log(f"\nCreating preset '{preset_name}' from: {self.model.verification_folder}")
             path = self.model._create_preset(preset_name)
             self.view.enable_create_preset_button(True)
+            self.view.enable_verify_button(True)
+            self.view.enable_clear_log_button(True)
+            self.view.enable_folder_button(True)
 
         except Exception as e:
             self.view.log(f"[Error] {e}")
@@ -52,14 +58,18 @@ class Controller:
 
             self.view.play_sound("assets/audio/ui_sound_01.wav", False)
             self.view.enable_create_preset_button(False)
-            self.view.enable_verify_preset_button(False)
+            self.view.enable_verify_button(False)
+            self.view.enable_clear_log_button(False)
+            self.view.enable_folder_button(False)
             self.view.log(f"Verifying hashes of {self.model.verification_folder} with preset '{preset_name}'")
             path = self.model._compare_hashes_with_preset(
                 folder_files_and_hashes=self.model._get_hashes(),
-                hashes_preset=self.model._load_preset("Example"),
+                hashes_preset=self.model._load_preset(self.view.get_preset_name_input().strip()),
                 preset_name=preset_name)
             self.view.enable_create_preset_button(True)
-            self.view.enable_verify_preset_button(True)
+            self.view.enable_verify_button(True)
+            self.view.enable_clear_log_button(True)
+            self.view.enable_folder_button(True)
 
         except Exception as e:
             self.view.log(f"[Error] {e}")
