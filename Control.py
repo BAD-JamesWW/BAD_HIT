@@ -19,15 +19,18 @@ class Controller:
         try:
             preset_name = self.view.get_preset_name_input().strip()
             if not preset_name:
-                self.view.log("[Error] Preset name is required.")
+                self.view.play_sound("assets/audio/ui_sound_05.wav", False)
+                self.view.log("\n[Error] Preset name is required.")
                 return
 
             if not os.path.isdir(self.model.verification_folder):
-                self.view.log("[Error] Verification folder is not set. Click 'Choose verification folder…' first.")
+                self.view.play_sound("assets/audio/ui_sound_05.wav", False)
+                self.view.log("\n[Error] Verification folder is not set. Click 'Choose verification folder…' first.")
                 return
 
+            self.view.play_sound("assets/audio/ui_sound_01.wav", False)
             self.view.enable_create_preset_button(False)
-            self.view.log(f"Creating preset '{preset_name}' from: {self.model.verification_folder}")
+            self.view.log(f"\nCreating preset '{preset_name}' from: {self.model.verification_folder}")
             path = self.model._create_preset(preset_name)
             self.view.enable_create_preset_button(True)
 
@@ -38,13 +41,16 @@ class Controller:
         try:
             preset_name = self.view.get_preset_name_input().strip()
             if not preset_name:
+                self.view.play_sound("assets/audio/ui_sound_05.wav", False)
                 self.view.log("[Error] Preset name is required.")
                 return
 
             if not os.path.isdir(self.model.verification_folder):
+                self.view.play_sound("assets/audio/ui_sound_05.wav", False)
                 self.view.log("[Error] Verification folder is not set. Click 'Choose verification folder…' first.")
                 return
 
+            self.view.play_sound("assets/audio/ui_sound_01.wav", False)
             self.view.enable_create_preset_button(False)
             self.view.enable_verify_preset_button(False)
             self.view.log(f"Verifying hashes of {self.model.verification_folder} with preset '{preset_name}'")
@@ -61,12 +67,13 @@ class Controller:
     def on_folder_picked(self, folder_path: str | None) -> None:
         try:
             if not folder_path:
+                self.view.play_sound("assets/audio/ui_sound_05.wav", False)
                 self.view.log("[Info] Folder selection cancelled.")
                 return
 
             self.model.set_verification_folder(folder_path)
             self.view.set_verification_folder_label(self.model.verification_folder)
-            self.view.log(f"[OK] Verification folder set to: {self.model.verification_folder}")
+            self.view.log(f"[OK] Verification folder set to: {self.model.verification_folder}\n")
 
         except Exception as e:
             self.view.log(f"[Error] {e}")

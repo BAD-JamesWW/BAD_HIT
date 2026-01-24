@@ -151,7 +151,7 @@ class Model:
             hashes
         )
 
-        self.log(f"\n[OK] Preset {PRESET_PREFIX}{preset_name} created.")
+        self.log(f"[OK] Preset {PRESET_PREFIX}{preset_name} created.\n")
 
     # ====================================================================================
     # Used to, compare each file's corresponding hash from the verify folder with the list of hashes from the chosen preset.
