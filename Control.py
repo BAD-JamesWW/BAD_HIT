@@ -77,6 +77,10 @@ class Controller:
 
         except Exception as e:
             self.view.log(f"[Error] {e}")
+
+    def on_clear_log_clicked(self) -> None:
+        self.view.play_sound("assets/audio/ui_sound_01.wav", False)
+        self.view.clear_log()
 # ===================================(END CALLBACKS)==================================
 
 
@@ -90,7 +94,8 @@ def main() -> None:
     view.build(
         on_action_clicked=controller.on_action_clicked,
         on_folder_picked=controller.on_folder_picked,
-        on_verify_clicked=controller.on_verify_clicked
+        on_verify_clicked=controller.on_verify_clicked,
+        on_clear_log_clicked=controller.on_clear_log_clicked
     )
 
     # initial state
