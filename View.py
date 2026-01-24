@@ -53,6 +53,7 @@ class View:
         on_action_clicked: Callable[[], None],
         on_verify_clicked: Callable[[], None],
         on_folder_picked: Callable[[str | None], None],
+        on_clear_log_clicked: Callable[[], None],
     ) -> None:
         dpg.create_context()
         dpg.create_viewport(title="(H.I.T.) - Hash Integrity Tool", width=976, height=535)
@@ -188,6 +189,8 @@ class View:
                 dpg.add_spacer(width=10)
                 verify_btn = dpg.add_button(label="Verify", width=180, callback=lambda: on_verify_clicked())
                 dpg.bind_item_theme(verify_btn, red_button_theme)
+                clear_log_btn = dpg.add_button(label='Clear Log', width=180, callback=lambda: on_clear_log_clicked())
+                dpg.bind_item_theme(clear_log_btn, red_button_theme)
 
             dpg.add_separator()
             dpg.add_text("Output:")
