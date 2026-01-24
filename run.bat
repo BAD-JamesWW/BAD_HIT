@@ -1,4 +1,4 @@
 @echo off
 cd /d "%~dp0"
-py Control.py
+python Control.py
 pause
