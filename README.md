@@ -21,7 +21,7 @@ If you redistribute or fork this project, do not represent your version as an of
 
 © 2026 Black Apex Development LLC.
 
-
+## Description
 **H.I.T.** lets users create presets — saved collections of SHA-256 hashes generated from a chosen verification folder.
 Users can then scan any folder and compare its files against a preset to confirm whether the contents match exactly, enabling fast, automated integrity verification.
 H.I.T. also includes rich metadata to support deeper analysis of presets and verification results.
