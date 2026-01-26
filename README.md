@@ -7,11 +7,17 @@
 
 H.I.T. (Hash Integrity Tool) is created and maintained by B.A.D. — Black Apex Development LLC (Ohio Entity #5448030).
 
-This project is open-source and is intended to be freely used, modified, and redistributed under the terms of the project’s license.
+## License
+This project is open-source and may be used, modified, and redistributed under the terms of the Apache-2.0 License.
 
-However, (B.A.D.) Black Apex Development and any associated branding (including names, logos, and identity elements) are used to identify the original creator and official project releases.
-Forks and modifications are allowed, but you may not claim affiliation with or endorsement by Black Apex Development.
-If you redistribute or fork this project, do not represent your version as an official Black Apex Development release, and do not use the (B.A.D.) Black Apex Development name or branding in a way that suggests ownership or partnership.
+**License:** Apache-2.0
+
+## Trademark / Branding Notice
+“Black Apex Development” (B.A.D.), along with any associated names, logos, and identity elements, are used to identify the original creator and official project releases.
+
+Forks and modifications are allowed. However, you may not claim affiliation with, endorsement by, or official status from Black Apex Development.
+
+If you redistribute or fork this project, do not represent your version as an official Black Apex Development release, and do not use the Black Apex Development name or branding in a way that suggests ownership, partnership, or endorsement.
 
 © 2026 Black Apex Development LLC.
 
