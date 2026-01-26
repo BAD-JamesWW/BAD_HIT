@@ -3,6 +3,8 @@
 
 # **H.I.T. — Hash Integrity Tool**
 
+---
+
 ## Company & Legal Information
 
 H.I.T. (Hash Integrity Tool) is created and maintained by B.A.D. — Black Apex Development LLC (Ohio Entity #5448030).
@@ -20,6 +22,8 @@ Forks and modifications are allowed. However, you may not claim affiliation with
 If you redistribute or fork this project, do not represent your version as an official Black Apex Development release, and do not use the Black Apex Development name or branding in a way that suggests ownership, partnership, or endorsement.
 
 © 2026 Black Apex Development LLC.
+
+---
 
 ## Description
 **H.I.T.** lets users create presets — saved collections of SHA-256 hashes generated from a chosen verification folder.
@@ -62,9 +66,6 @@ This project uses:
 - **Create Preset**: Generates a preset from the files in the selected verification folder, using the current Preset Name entered.
 - **Verify**: Compares the current verification folder’s files against the selected preset using SHA-256 hash matching.
 - **Clear Log**: Clears all text in the log window.
-
-
----
 
 ### **General Steps**
 1. Name your preset
