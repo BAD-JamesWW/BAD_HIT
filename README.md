@@ -37,7 +37,7 @@ This project uses:
 - Rich metadata for deeper analysis of preset creation and verification results.
 
 ## **Youtube**
-- [H.I.T. Demo Video]() — TODO
+- [H.I.T. Demo Video](https://youtu.be/GI1vdoShXZo) — See how the tool works
 
 ---
 
