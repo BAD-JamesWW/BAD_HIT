@@ -14,7 +14,7 @@ PRESET_FOLDER = './presets'
 METADATA_FOLDER = './metadata'
 PRESET_PREFIX = 'hashes_preset_'
 METADATA_FOR_HASHES_PREFIX = 'metadata_for_hashes_preset_'
-METADATA_FOR_HASH_COMPARISON_WITH_PRESET_PREFIX= 'metadata_for_hash_comparison_with_preset_'
+METADATA_FOR_HASH_COMPARISON_WITH_PRESET_PREFIX = 'metadata_for_hash_comparison_with_preset_'
 HIT_VERSION = '1.0.0'
 
 
@@ -52,30 +52,31 @@ class Model:
         return hash_object.hexdigest()
 
     # ====================================================================================
-    # Returns a dict of, each file's name and it's corresponding hash from the 'verify' folder.
+    # Returns a dict of, each file's name (rel_path) and it's corresponding hash from the 'verify' folder.
     def _get_hashes(self):
         folder_files_and_hashes = {}
 
-        if not os.path.isdir(verification_folder):
-            self.log(f"\n[Error] Verification folder not found: {verification_folder}")
+        if not os.path.isdir(self.verification_folder):
+            self.log(f"\n[Error] Verification folder not found: {self.verification_folder}")
             return folder_files_and_hashes
 
         for root, _, files in os.walk(self.verification_folder):
             for name in files:
                 full_path = os.path.join(root, name)
                 if os.path.isfile(full_path):
-                    rel_path = os.path.relpath(full_path,
-                                               self.verification_folder)  # keeps folder structure in the name
-                folder_files_and_hashes[f"{name}"] = []
-                self.log(f"\ncalculating hash for file: {name}")
-                folder_files_and_hashes[f"{name}"].append(self._calculate_sha256(full_path))
-                self.log("complete")
+                    rel_path = os.path.relpath(full_path, self.verification_folder)  # keeps folder structure
+                    folder_files_and_hashes[rel_path] = []
+                    self.log(f"\ncalculating hash for file: {rel_path}")
+                    folder_files_and_hashes[rel_path].append(self._calculate_sha256(full_path))
+                    self.log("complete")
 
         return folder_files_and_hashes
 
 
     # ====================================================================================
-    # Returns a list of hashes for the desired preset.
+    # Returns preset data.
+    # New format: dict of { "rel_path": "sha256" }
+    # Old format: list of sha256 strings
     def _load_preset(self, preset_name: str):
 
         # If user data folder does not exist, create it.
@@ -90,10 +91,16 @@ class Model:
         try:
             with open(path, 'r') as f:
                 data = json.load(f)
+
+                # NEW: dict preset
+                if isinstance(data, dict) and data:
+                    return data
+
+                # OLD: list preset
                 if isinstance(data, list) and data:
                     return data
-                else:
-                    return None
+
+                return None
         except json.JSONDecodeError:
             self.log(f"\n[Error] Failed to decode JSON in: {path}")
             return None
@@ -111,7 +118,7 @@ class Model:
     # ====================================================================================
     # Used to create a preset using all files from the verification folder
     def _create_preset(self, preset_name: str):
-        hashes = []
+        hashes = {}  # NEW: rel_path -> sha256
 
         # Return if preset already exists
         if os.path.isfile(PRESET_FOLDER + '/' + PRESET_PREFIX + preset_name + '.json'):
@@ -135,10 +142,9 @@ class Model:
             for name in files:
                 full_path = os.path.join(root, name)
                 if os.path.isfile(full_path):
-                    rel_path = os.path.relpath(full_path,
-                                               self.verification_folder)  # keeps folder structure in the name
+                    rel_path = os.path.relpath(full_path, self.verification_folder)  # keeps folder structure in the name
                     self.log(f"\nGenerating hash of {rel_path} to preset {PRESET_PREFIX}{preset_name}...")
-                    hashes.append(self._calculate_sha256(full_path))
+                    hashes[rel_path] = self._calculate_sha256(full_path)
                     self.log("complete")
 
         # save (once) after collecting hashes
@@ -157,30 +163,69 @@ class Model:
         self.log(f"[OK] Preset {PRESET_PREFIX}{preset_name} created.\n")
 
     # ====================================================================================
-    # Used to, compare each file's corresponding hash from the verify folder with the list of hashes from the chosen preset.
-    def _compare_hashes_with_preset(self, folder_files_and_hashes: dict, hashes_preset: list, preset_name: str):
+    # Used to compare each file's corresponding hash from the verify folder with the preset.
+    # Supports:
+    # - NEW preset: dict { rel_path: sha256 }
+    # - OLD preset: list [sha256, sha256, ...]
+    def _compare_hashes_with_preset(self, folder_files_and_hashes: dict, hashes_preset, preset_name: str):
         files_that_failed_verification = []
 
         if hashes_preset is None:
             self._create_hash_comparison_with_preset_metadata(
-                preset_name=preset_name, action=inspect.currentframe().f_code.co_name,
+                preset_name=preset_name,
+                action=inspect.currentframe().f_code.co_name,
                 result=0,
                 duration_seconds=0,
-                hashes_that_failed_verification=files_that_failed_verification)
+                hashes_that_failed_verification=files_that_failed_verification
+            )
             self.log('\nNo preset found')
             return
 
         start_time = time.perf_counter()
 
-        # look through each files hash and if a hash is not in the preset, then add it to list of hashes not found
-        for key, value in folder_files_and_hashes.items():
-            file_hash = value[0]
-            self.log(f"\nverifying in progress for: {key}")
-            if file_hash in hashes_preset:
-                pass
-            else:
-                files_that_failed_verification.append(key)
-            self.log("complete")
+        # ==========================
+        # NEW FORMAT: dict preset => { rel_path: sha256 }
+        if isinstance(hashes_preset, dict):
+
+            # 1) Verify files in folder against preset (by filename)
+            for rel_path, value in folder_files_and_hashes.items():
+                file_hash = value[0]
+                self.log(f"\nverifying in progress for: {rel_path}")
+
+                expected_hash = hashes_preset.get(rel_path)
+
+                if expected_hash is None:
+                    files_that_failed_verification.append(f"[Unexpected] {rel_path} ({file_hash})")
+                elif file_hash != expected_hash:
+                    files_that_failed_verification.append(f"[Mismatch] {rel_path} ({file_hash})")
+
+                self.log("complete")
+
+            # 2) Check for files that exist in preset but are missing from folder
+            for rel_path, expected_hash in hashes_preset.items():
+                if rel_path not in folder_files_and_hashes:
+                    files_that_failed_verification.append(f"[Missing] {rel_path} (expected {expected_hash})")
+
+        # ==========================
+        # OLD FORMAT: list preset => [sha256, sha256, ...]
+        else:
+            # look through each file's hash and if a hash is not in the preset, then add filename
+            for rel_path, value in folder_files_and_hashes.items():
+                file_hash = value[0]
+                self.log(f"\nverifying in progress for: {rel_path}")
+                if file_hash not in hashes_preset:
+                    files_that_failed_verification.append(rel_path)
+                self.log("complete")
+
+            # check if data that's in the preset is not in the chosen verification folder
+            preset_copy = hashes_preset.copy()
+            for h in hashes_preset:
+                for _, v in folder_files_and_hashes.items():
+                    if v and v[0] == h:
+                        preset_copy.remove(h)
+                        break
+            for h in preset_copy:
+                files_that_failed_verification.append(f"[Missing hash] {h}")
 
         duration_seconds = time.perf_counter() - start_time
         self._create_hash_comparison_with_preset_metadata(
@@ -188,20 +233,27 @@ class Model:
             action=inspect.currentframe().f_code.co_name,
             result=1,
             duration_seconds=duration_seconds,
-            hashes_that_failed_verification=files_that_failed_verification)
+            hashes_that_failed_verification=files_that_failed_verification
+        )
 
         # test outcome
         if not files_that_failed_verification:
             self.log("\nAll files passed verification")
         else:
-            self.log(f"\nfiles that failed verification: {files_that_failed_verification}")
+            for f in files_that_failed_verification:
+                self.log(f"\nfiles that failed verification: {f}")
 
     # ====================================================================================
     # Writes metadata for the hash comparison with preset results
     def _create_hash_comparison_with_preset_metadata(self, preset_name: str, action: str, result: int,
                                                      duration_seconds: float, hashes_that_failed_verification: list):
         filename = f"{PRESET_FOLDER}/{PRESET_PREFIX}{preset_name}.json"
-        mtime = os.path.getmtime(filename)
+
+        # preset might not exist (e.g., "no preset found" path) so guard this
+        preset_modified_at = None
+        if os.path.isfile(filename):
+            mtime = os.path.getmtime(filename)
+            preset_modified_at = datetime.fromtimestamp(mtime).astimezone().isoformat()
 
         if not os.path.isdir(METADATA_FOLDER):
             os.mkdir(METADATA_FOLDER)
@@ -211,14 +263,15 @@ class Model:
 
         event = {
             "timestamp_of_event": datetime.now().astimezone().isoformat(),
-            "preset_modified_at": datetime.fromtimestamp(mtime).astimezone().isoformat(),
+            "preset_modified_at": preset_modified_at,
             "app": "HIT",
             "version": HIT_VERSION,
             "action": action,
-            "target_verification_folder": verification_folder,
+            "target_verification_folder": self.verification_folder,
             "preset": f"{PRESET_PREFIX}{preset_name}",
             "result": result,
             "hashes_that_failed_verification": len(hashes_that_failed_verification),
+            "failed_items": hashes_that_failed_verification,  # <-- ADD THIS LINE
             "comparison_duration_ms": f"{duration_seconds:.4f}"
         }
 
@@ -250,10 +303,14 @@ class Model:
         action: str,
         result: int,
         duration_seconds: float,
-        hashes_written: list
+        hashes_written
     ):
         filename = f"{PRESET_FOLDER}/{PRESET_PREFIX}{preset_name}.json"
-        mtime = os.path.getmtime(filename)
+
+        preset_modified_at = None
+        if os.path.isfile(filename):
+            mtime = os.path.getmtime(filename)
+            preset_modified_at = datetime.fromtimestamp(mtime).astimezone().isoformat()
 
         if not os.path.isdir(METADATA_FOLDER):
             os.mkdir(METADATA_FOLDER)
@@ -262,17 +319,17 @@ class Model:
         metadata_path = f"{METADATA_FOLDER}/{METADATA_FOR_HASHES_PREFIX}{preset_name}.json"
 
         event = {
-            "message": f"The following hashes were added to {PRESET_FOLDER}/{PRESET_PREFIX}{preset_name}.json",
-            "hashes": hashes_written,
+            "message": f"Preset contents written to {PRESET_FOLDER}/{PRESET_PREFIX}{preset_name}.json",
+            "hashes": hashes_written,  # dict (new) or list (old)
             "timestamp_of_event": datetime.now().astimezone().isoformat(),
-            "preset_modified_at": datetime.fromtimestamp(mtime).astimezone().isoformat(),
+            "preset_modified_at": preset_modified_at,
             "app": "HIT",
             "version": HIT_VERSION,
             "action": action,
             "target_folder": PRESET_FOLDER,
             "preset": f"{PRESET_PREFIX}{preset_name}",
             "result": result,
-            "hashes_written": len(hashes_written),
+            "hashes_written": len(hashes_written) if hashes_written is not None else 0,
             "duration_ms": f"{duration_seconds:.4f}"
         }
 
