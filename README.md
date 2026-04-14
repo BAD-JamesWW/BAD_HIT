@@ -55,6 +55,7 @@ This project uses:
 
 ### **Installation & Execution**
 **Supported Systems**: Windows 11
+- **Install Python**: Download the latest python version from the Microsoft Store.
 - **Run the update.bat**: Open a terminal in the H.I.T. main directory and run the "update.bat" file.
 - **Run the run.bat**: Open a terminal in the H.I.T. main directory and run the "run.bat" file.
 - Now unless an update happens, you can just run "run.bat" to execute H.I.T.
